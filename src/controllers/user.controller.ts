@@ -11,6 +11,7 @@ export const createUser = async (req: Request, res: Response) => {
   const data = createUserSchema.parse(req.body);
 
   const user = await userService.createUser(data);
+  const { password, ...safeUser } = user;
 
-  res.status(201).json(user);
+  res.status(201).json(safeUser);
 };
