@@ -1,5 +1,5 @@
 import { prisma } from "../lib/prisma";
-import { CreateUserInput } from "../types/user.type";
+import { CreateUserInput, LoginUserInput } from "../types/user.type";
 import bcrypt from "bcrypt";
 
 export const userService = {
@@ -15,5 +15,22 @@ export const userService = {
         password: hashedPassword,
       },
     });
+  },
+
+  loginUser: async (data: LoginUserInput) => {
+    const user = await prisma.user.findUnique({
+      where: { email: data.email },
+    });
+    if (!user) {
+      throw new Error("Invalid credentials");
+    }
+
+    const isValid = await bcrypt.compare(data.password, user.password);
+
+    if (!isValid) {
+      throw new Error("Invalid credentials");
+    }
+    const { password, ...safeUser } = user;
+    return safeUser;
   },
 };
