@@ -3,8 +3,10 @@ import { CreateUserInput, LoginUserInput } from "../types/user.type";
 import bcrypt from "bcrypt";
 
 export const userService = {
-  getUsers: async () => {
-    return prisma.user.findMany();
+  getUserById: async (id: string) => {
+    return prisma.user.findUnique({
+      where: { id },
+    });
   },
 
   createUser: async (data: CreateUserInput) => {

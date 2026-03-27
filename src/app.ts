@@ -1,12 +1,16 @@
 import express from "express";
-import userRoutes from "./routes/auth.route";
+import cookieParser from "cookie-parser";
+import authRoutes from "./routes/auth.route";
+import userRoutes from "./routes/user.route";
 import { errorMiddleware } from "./middlewares/error.middleware";
 
 const app = express();
 
 app.use(express.json());
+app.use(cookieParser());
 
-app.use("/auth", userRoutes);
+app.use("/auth", authRoutes);
+app.use("/api", userRoutes);
 
 app.use(errorMiddleware);
 
