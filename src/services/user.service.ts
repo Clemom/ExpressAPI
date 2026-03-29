@@ -24,13 +24,13 @@ export const userService = {
       where: { email: data.email },
     });
     if (!user) {
-      throw new Error("Invalid credentials");
+      throw { status: 401, message: "Invalid credentials" };
     }
 
     const isValid = await bcrypt.compare(data.password, user.password);
 
     if (!isValid) {
-      throw new Error("Invalid credentials");
+      throw { status: 401, message: "Invalid credentials" };
     }
     const { password, ...safeUser } = user;
     return safeUser;
