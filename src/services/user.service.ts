@@ -1,5 +1,5 @@
 import { prisma } from "../lib/prisma";
-import { CreateUserInput, LoginUserInput } from "../types/user.type";
+import { CreateUserDto, LoginUserDto } from "../dto/user.dto";
 import bcrypt from "bcrypt";
 
 export const userService = {
@@ -9,7 +9,7 @@ export const userService = {
     });
   },
 
-  createUser: async (data: CreateUserInput) => {
+  createUser: async (data: CreateUserDto) => {
     const hashedPassword = await bcrypt.hash(data.password, 10);
     return prisma.user.create({
       data: {
@@ -19,7 +19,7 @@ export const userService = {
     });
   },
 
-  loginUser: async (data: LoginUserInput) => {
+  loginUser: async (data: LoginUserDto) => {
     const user = await prisma.user.findUnique({
       where: { email: data.email },
     });
