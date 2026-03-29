@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
 import { registerSchema, loginSchema } from "../schemas/user.schema";
 import { userService } from "../services/user.service";
-import { generateAccessToken } from "../lib/jwt";
+import { generateAccessToken, generateRefreshToken } from "../lib/jwt";
+import { prisma } from "../lib/prisma";
 
 export const me = async (req: Request, res: Response) => {
   const userId = req.user!.id;
@@ -31,12 +32,32 @@ export const login = async (req: Request, res: Response) => {
 
   const user = await userService.loginUser(data);
 
-  const token = generateAccessToken({
+  const accessToken = generateAccessToken({
     id: user.id,
     email: user.email,
   });
 
-  res.cookie("accessToken", token, {
+  const refreshToken = generateRefreshToken({
+    id: user.id,
+    email: user.email,
+  });
+
+  await prisma.refreshToken.create({
+    data: {
+      token: refreshToken,
+      userId: user.id,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    },
+  });
+
+  res.cookie("accessToken", accessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+  });
+
+  res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -47,4 +68,19 @@ export const login = async (req: Request, res: Response) => {
     id: user.id,
     email: user.email,
   });
+};
+
+export const logout = async (req: Request, res: Response) => {
+  const token = req.cookies.refreshToken;
+
+  if (token) {
+    await prisma.refreshToken.deleteMany({
+      where: { token },
+    });
+  }
+
+  res.clearCookie("accessToken");
+  res.clearCookie("refreshToken");
+
+  res.status(200).json({ message: "Logged out" });
 };
