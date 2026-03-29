@@ -1,11 +1,8 @@
-import {
-  verifyRefreshToken,
-  generateAccessToken,
-  generateRefreshToken,
-} from "../lib/jwt";
+import { verifyRefreshToken } from "../lib/jwt";
 import { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { cookieOptions } from "../config/cookie";
+import { authService } from "../services/auth.service";
 
 export const refresh = async (req: Request, res: Response) => {
   const token = req.cookies.refreshToken;
@@ -25,31 +22,14 @@ export const refresh = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "Invalid refresh token" });
     }
 
-    await prisma.refreshToken.deleteMany({
-      where: { token },
-    });
+    const { accessToken, refreshToken } = await authService.rotateRefreshToken(
+      token,
+      decoded.id,
+      decoded.email,
+    );
 
-    const newAccessToken = generateAccessToken({
-      id: decoded.id,
-      email: decoded.email,
-    });
-
-    const newRefreshToken = generateRefreshToken({
-      id: decoded.id,
-      email: decoded.email,
-    });
-
-    await prisma.refreshToken.create({
-      data: {
-        token: newRefreshToken,
-        userId: decoded.id,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      },
-    });
-
-    res.cookie("accessToken", newAccessToken, cookieOptions);
-
-    res.cookie("refreshToken", newRefreshToken, cookieOptions);
+    res.cookie("accessToken", accessToken, cookieOptions);
+    res.cookie("refreshToken", refreshToken, cookieOptions);
 
     res.status(200).json({ message: "Refreshed" });
   } catch {

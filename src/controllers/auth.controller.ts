@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
 import { registerSchema, loginSchema } from "../schemas/user.schema";
 import { userService } from "../services/user.service";
-import { generateAccessToken, generateRefreshToken } from "../lib/jwt";
 import { prisma } from "../lib/prisma";
 import { cookieOptions } from "../config/cookie";
+import { authService } from "../services/auth.service";
 
 export const me = async (req: Request, res: Response) => {
   const userId = req.user!.id;
@@ -33,26 +33,12 @@ export const login = async (req: Request, res: Response) => {
 
   const user = await userService.loginUser(data);
 
-  const accessToken = generateAccessToken({
-    id: user.id,
-    email: user.email,
-  });
-
-  const refreshToken = generateRefreshToken({
-    id: user.id,
-    email: user.email,
-  });
-
-  await prisma.refreshToken.create({
-    data: {
-      token: refreshToken,
-      userId: user.id,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    },
-  });
+  const { accessToken, refreshToken } = await authService.generateTokens(
+    user.id,
+    user.email,
+  );
 
   res.cookie("accessToken", accessToken, cookieOptions);
-
   res.cookie("refreshToken", refreshToken, cookieOptions);
 
   res.status(200).json({
