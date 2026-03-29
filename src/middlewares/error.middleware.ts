@@ -2,7 +2,12 @@ import { ZodError } from "zod";
 import { Request, Response, NextFunction } from "express";
 import { Prisma } from "@prisma/client";
 
-export const errorMiddleware = (err: unknown, req: Request, res: Response, next: NextFunction) => {
+export const errorMiddleware = (
+  err: unknown,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   if (err instanceof ZodError) {
     return res.status(400).json({
       message: "Validation error",
@@ -18,10 +23,15 @@ export const errorMiddleware = (err: unknown, req: Request, res: Response, next:
     }
   }
 
+  if (typeof err === "object" && err !== null && "status" in err) {
+    return res.status((err as any).status).json({
+      message: (err as any).message,
+    });
+  }
+
   console.error(err);
 
   return res.status(500).json({
     message: "Internal server error",
-    error: err,
   });
 };

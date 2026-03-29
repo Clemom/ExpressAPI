@@ -4,6 +4,13 @@ import { userService } from "../services/user.service";
 import { generateAccessToken, generateRefreshToken } from "../lib/jwt";
 import { prisma } from "../lib/prisma";
 
+const cookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax" as const,
+  path: "/",
+};
+
 export const me = async (req: Request, res: Response) => {
   const userId = req.user!.id;
 
@@ -50,12 +57,7 @@ export const login = async (req: Request, res: Response) => {
     },
   });
 
-  res.cookie("accessToken", accessToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-  });
+  res.cookie("accessToken", accessToken, cookieOptions);
 
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
