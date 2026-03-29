@@ -5,6 +5,7 @@ import {
 } from "../lib/jwt";
 import { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
+import { cookieOptions } from "../config/cookie";
 
 export const refresh = async (req: Request, res: Response) => {
   const token = req.cookies.refreshToken;
@@ -46,19 +47,9 @@ export const refresh = async (req: Request, res: Response) => {
       },
     });
 
-    res.cookie("accessToken", newAccessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-    });
+    res.cookie("accessToken", newAccessToken, cookieOptions);
 
-    res.cookie("refreshToken", newRefreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-    });
+    res.cookie("refreshToken", newRefreshToken, cookieOptions);
 
     res.status(200).json({ message: "Refreshed" });
   } catch {

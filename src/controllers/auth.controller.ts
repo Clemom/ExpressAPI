@@ -3,13 +3,7 @@ import { registerSchema, loginSchema } from "../schemas/user.schema";
 import { userService } from "../services/user.service";
 import { generateAccessToken, generateRefreshToken } from "../lib/jwt";
 import { prisma } from "../lib/prisma";
-
-const cookieOptions = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "lax" as const,
-  path: "/",
-};
+import { cookieOptions } from "../config/cookie";
 
 export const me = async (req: Request, res: Response) => {
   const userId = req.user!.id;
@@ -59,12 +53,7 @@ export const login = async (req: Request, res: Response) => {
 
   res.cookie("accessToken", accessToken, cookieOptions);
 
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-  });
+  res.cookie("refreshToken", refreshToken, cookieOptions);
 
   res.status(200).json({
     id: user.id,
@@ -81,8 +70,8 @@ export const logout = async (req: Request, res: Response) => {
     });
   }
 
-  res.clearCookie("accessToken");
-  res.clearCookie("refreshToken");
+  res.clearCookie("accessToken", cookieOptions);
+  res.clearCookie("refreshToken", cookieOptions);
 
   res.status(200).json({ message: "Logged out" });
 };

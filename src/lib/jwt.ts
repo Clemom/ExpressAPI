@@ -11,34 +11,27 @@ export interface JwtPayload {
   email: string;
 }
 
+const verifyToken = (token: string): JwtPayload => {
+  const decoded = jwt.verify(token, JWT_SECRET);
+
+  if (typeof decoded === "string") {
+    throw new Error("Invalid token payload");
+  }
+
+  return decoded as JwtPayload;
+};
+
+export const verifyAccessToken = verifyToken;
+export const verifyRefreshToken = verifyToken;
+
 export const generateAccessToken = (payload: JwtPayload): string => {
   return jwt.sign(payload, JWT_SECRET, {
     expiresIn: "15m",
   });
 };
 
-export const verifyAccessToken = (token: string): JwtPayload => {
-  const decoded = jwt.verify(token, JWT_SECRET);
-
-  if (typeof decoded === "string") {
-    throw new Error("Invalid token payload");
-  }
-
-  return decoded as JwtPayload;
-};
-
 export const generateRefreshToken = (payload: JwtPayload): string => {
   return jwt.sign(payload, JWT_SECRET, {
     expiresIn: "7d",
   });
-};
-
-export const verifyRefreshToken = (token: string): JwtPayload => {
-  const decoded = jwt.verify(token, JWT_SECRET);
-
-  if (typeof decoded === "string") {
-    throw new Error("Invalid token payload");
-  }
-
-  return decoded as JwtPayload;
 };
